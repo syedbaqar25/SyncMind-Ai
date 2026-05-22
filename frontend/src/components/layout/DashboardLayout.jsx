@@ -1,5 +1,15 @@
 import Sidebar from './Sidebar'
 import { useAuthStore } from '../../store/authStore'
+import { NavLink } from 'react-router-dom'
+import { BarChart3, CheckSquare, LayoutDashboard, Settings, Video } from 'lucide-react'
+
+const mobileLinks = [
+  ['/dashboard', LayoutDashboard, 'Home'],
+  ['/meetings', Video, 'Meetings'],
+  ['/tasks', CheckSquare, 'Tasks'],
+  ['/analytics', BarChart3, 'Charts'],
+  ['/workspace', Settings, 'Settings'],
+]
 
 export default function DashboardLayout({ title, children }) {
   const user = useAuthStore((state) => state.user)
@@ -18,7 +28,19 @@ export default function DashboardLayout({ title, children }) {
             </div>
           </div>
         </header>
-        <div className="mx-auto max-w-7xl p-5">{children}</div>
+        <div className="mx-auto max-w-7xl p-5 pb-24 lg:pb-5">{children}</div>
+        <nav className="fixed bottom-0 left-0 right-0 z-40 grid grid-cols-5 border-t border-border bg-surface/95 backdrop-blur lg:hidden">
+          {mobileLinks.map(([to, Icon, label]) => (
+            <NavLink className="flex min-h-16 flex-col items-center justify-center gap-1 text-[11px] text-textSecondary" to={to} key={to}>
+              {({ isActive }) => (
+                <>
+                  <Icon className={isActive ? 'text-primary' : ''} size={19} />
+                  <span className={isActive ? 'text-primary' : ''}>{label}</span>
+                </>
+              )}
+            </NavLink>
+          ))}
+        </nav>
       </main>
     </div>
   )
