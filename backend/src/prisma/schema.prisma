@@ -1,0 +1,209 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum MeetingStatus {
+  PENDING
+  UPLOADING
+  PROCESSING
+  TRANSCRIBING
+  ANALYZING
+  COMPLETED
+  FAILED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum NotifType {
+  MEETING_READY
+  TASK_ASSIGNED
+  MEMBER_JOINED
+  SYSTEM
+}
+
+model User {
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  name                String
+  avatar              String?
+  password            String?
+  isEmailVerified     Boolean   @default(false)
+  emailVerifyToken    String?
+  passwordResetToken  String?
+  passwordResetExpiry DateTime?
+  googleId            String?   @unique
+  role                Role      @default(USER)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  refreshTokens       RefreshToken[]
+  workspaceMembers    WorkspaceMember[]
+  meetingParticipants MeetingParticipant[]
+  assignedTasks       ActionItemAssignee[]
+  notifications       Notification[]
+}
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  logo      String?
+  ownerId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  members   WorkspaceMember[]
+  meetings  Meeting[]
+}
+
+model WorkspaceMember {
+  id          String        @id @default(cuid())
+  userId      String
+  workspaceId String
+  role        WorkspaceRole @default(MEMBER)
+  joinedAt    DateTime      @default(now())
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  @@unique([userId, workspaceId])
+}
+
+model Meeting {
+  id              String        @id @default(cuid())
+  title           String
+  description     String?
+  workspaceId     String
+  uploadedById    String
+  audioUrl        String?
+  videoUrl        String?
+  cloudinaryId    String?
+  duration        Int?
+  status          MeetingStatus @default(PENDING)
+  processingError String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  workspace       Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  transcript      Transcript?
+  actionItems     ActionItem[]
+  participants    MeetingParticipant[]
+  tags            MeetingTag[]
+}
+
+model Transcript {
+  id         String   @id @default(cuid())
+  meetingId  String   @unique
+  fullText   String   @db.Text
+  summary    String?  @db.Text
+  keyTopics  String[]
+  sentiment  String?
+  language   String   @default("en")
+  createdAt  DateTime @default(now())
+  meeting    Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  segments   TranscriptSegment[]
+}
+
+model TranscriptSegment {
+  id           String     @id @default(cuid())
+  transcriptId String
+  speaker      String?
+  text         String     @db.Text
+  startTime    Float
+  endTime      Float
+  confidence   Float?
+  transcript   Transcript @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
+}
+
+model ActionItem {
+  id          String     @id @default(cuid())
+  meetingId   String
+  title       String
+  description String?
+  priority    Priority   @default(MEDIUM)
+  status      TaskStatus @default(TODO)
+  dueDate     DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  meeting     Meeting    @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  assignees   ActionItemAssignee[]
+}
+
+model ActionItemAssignee {
+  id           String     @id @default(cuid())
+  actionItemId String
+  userId       String
+  assignedAt   DateTime   @default(now())
+  actionItem   ActionItem @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([actionItemId, userId])
+}
+
+model MeetingParticipant {
+  id        String  @id @default(cuid())
+  meetingId String
+  userId    String
+  meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([meetingId, userId])
+}
+
+model Tag {
+  id       String       @id @default(cuid())
+  name     String
+  color    String       @default("#6366f1")
+  meetings MeetingTag[]
+}
+
+model MeetingTag {
+  meetingId String
+  tagId     String
+  meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  @@id([meetingId, tagId])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      NotifType
+  isRead    Boolean   @default(false)
+  metadata  Json?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
