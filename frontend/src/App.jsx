@@ -1,120 +1,78 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { Suspense, lazy } from 'react'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Toaster } from 'react-hot-toast'
+import { useAuthStore } from './store/authStore'
+
+const LandingPage = lazy(() => import('./pages/LandingPage'))
+const LoginPage = lazy(() => import('./pages/LoginPage'))
+const RegisterPage = lazy(() => import('./pages/RegisterPage'))
+const EmailVerifyPage = lazy(() => import('./pages/EmailVerifyPage'))
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'))
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
+const DashboardPage = lazy(() => import('./pages/DashboardPage'))
+const MeetingsPage = lazy(() => import('./pages/MeetingsPage'))
+const MeetingDetailPage = lazy(() => import('./pages/MeetingDetailPage'))
+const TasksPage = lazy(() => import('./pages/TasksPage'))
+const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'))
+const WorkspacePage = lazy(() => import('./pages/WorkspacePage'))
+const ProfilePage = lazy(() => import('./pages/ProfilePage'))
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
+
+function PageShell({ children }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.25 }}
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+function ProtectedRoute({ children }) {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  return isAuthenticated ? children : <Navigate to="/login" replace />
+}
 
 function App() {
-  const [count, setCount] = useState(0)
+  const location = useLocation()
 
   return (
     <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      <AnimatePresence mode="wait">
+        <Suspense fallback={<div className="min-h-screen bg-background p-8 text-textPrimary">Loading...</div>}>
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={<PageShell><LandingPage /></PageShell>} />
+            <Route path="/login" element={<PageShell><LoginPage /></PageShell>} />
+            <Route path="/register" element={<PageShell><RegisterPage /></PageShell>} />
+            <Route path="/verify-email/:token" element={<PageShell><EmailVerifyPage /></PageShell>} />
+            <Route path="/forgot-password" element={<PageShell><ForgotPasswordPage /></PageShell>} />
+            <Route path="/reset-password/:token" element={<PageShell><ResetPasswordPage /></PageShell>} />
+            <Route path="/dashboard" element={<ProtectedRoute><PageShell><DashboardPage /></PageShell></ProtectedRoute>} />
+            <Route path="/meetings" element={<ProtectedRoute><PageShell><MeetingsPage /></PageShell></ProtectedRoute>} />
+            <Route path="/meetings/:id" element={<ProtectedRoute><PageShell><MeetingDetailPage /></PageShell></ProtectedRoute>} />
+            <Route path="/tasks" element={<ProtectedRoute><PageShell><TasksPage /></PageShell></ProtectedRoute>} />
+            <Route path="/analytics" element={<ProtectedRoute><PageShell><AnalyticsPage /></PageShell></ProtectedRoute>} />
+            <Route path="/workspace" element={<ProtectedRoute><PageShell><WorkspacePage /></PageShell></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><PageShell><ProfilePage /></PageShell></ProtectedRoute>} />
+            <Route path="*" element={<PageShell><NotFoundPage /></PageShell>} />
+          </Routes>
+        </Suspense>
+      </AnimatePresence>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: '#13131a',
+            color: '#f1f5f9',
+            border: '1px solid #2a2a3d',
+          },
+        }}
+      />
     </>
   )
 }
