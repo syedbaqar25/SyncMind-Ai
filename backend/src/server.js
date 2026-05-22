@@ -4,6 +4,7 @@ const http = require('http');
 const app = require('./app');
 const validateEnv = require('./config/validateEnv');
 const { connectDatabase, disconnectDatabase } = require('./config/database');
+const { initSocket } = require('./socket');
 const { startMeetingWorker } = require('./queues/workers/meeting.worker');
 const logger = require('./utils/logger');
 
@@ -16,6 +17,7 @@ const startServer = async () => {
   startMeetingWorker();
 
   const server = http.createServer(app);
+  initSocket(server);
 
   server.listen(PORT, () => {
     logger.info(`SyncMind API listening on port ${PORT}`);
