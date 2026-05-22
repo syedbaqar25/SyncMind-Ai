@@ -1,12 +1,15 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
+const passport = require('passport');
 const routes = require('./routes');
-const { errorResponse } = require('./utils/response.utils');
-const logger = require('./utils/logger');
+const configurePassport = require('./config/passport');
+const { generalLimiter } = require('./middleware/rateLimit.middleware');
+const { notFound, errorHandler } = require('./middleware/error.middleware');
 
 const app = express();
+
+configurePassport();
 
 app.use(helmet());
 app.use(
@@ -17,28 +20,12 @@ app.use(
 );
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use(
-  rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 100,
-    standardHeaders: true,
-    legacyHeaders: false
-  })
-);
+app.use(passport.initialize());
+app.use(generalLimiter);
 
 app.use('/api', routes);
 
-app.use((req, res) => {
-  errorResponse(res, 'Route not found', 404);
-});
-
-app.use((error, req, res, next) => {
-  logger.error('Unhandled request error', {
-    message: error.message,
-    stack: error.stack
-  });
-
-  errorResponse(res, error.message || 'Internal server error', error.status || 500);
-});
+app.use(notFound);
+app.use(errorHandler);
 
 module.exports = app;
