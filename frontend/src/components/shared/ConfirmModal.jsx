@@ -22,7 +22,7 @@ export default function ConfirmModal({ open, title, description, confirmLabel = 
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="font-heading text-xl font-semibold text-textPrimary">{title}</h2>
-                <p className="mt-2 text-sm text-textSecondary">{description}</p>
+                <div className="mt-2 text-sm text-textSecondary">{description}</div>
               </div>
               <button className="rounded-md p-1 text-textSecondary hover:bg-surface2" onClick={onClose} type="button">
                 <X size={18} />
