@@ -58,6 +58,7 @@ const transcript = await prisma.transcript.create({
             text: segment.text,
             startTime: segment.start,
             endTime: segment.end,
+            speaker: segment.speaker,
             confidence: segment.avg_logprob ? Math.exp(segment.avg_logprob) : null
           }))
         }

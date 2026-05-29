@@ -4,28 +4,48 @@ const path = require('path');
 const axios = require('axios');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-// Key 1 — dedicated for transcription
 const getTranscriptionClient = () => new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-const getMimeType = (filePath) => {
-  const ext = path.extname(filePath).toLowerCase();
-  const mimeTypes = {
-    '.mp3': 'audio/mp3',
-    '.mp4': 'video/mp4',
-    '.wav': 'audio/wav',
-    '.m4a': 'audio/m4a',
-    '.webm': 'video/webm',
-    '.mov': 'video/quicktime',
-    '.avi': 'video/avi',
-    '.ogg': 'audio/ogg',
-    '.flac': 'audio/flac'
-  };
-  return mimeTypes[ext] || 'video/mp4';
+const extensionMimeTypes = {
+  '.avi': 'video/x-msvideo',
+  '.flac': 'audio/flac',
+  '.m4a': 'audio/mp4',
+  '.mov': 'video/quicktime',
+  '.mp3': 'audio/mpeg',
+  '.mp4': 'video/mp4',
+  '.ogg': 'audio/ogg',
+  '.wav': 'audio/wav',
+  '.webm': 'video/webm'
 };
 
-const getExtension = (url) => {
-  const ext = url.split('?')[0].split('.').pop().toLowerCase();
-  return ext ? `.${ext}` : '.mp4';
+const stripJsonFence = (content) =>
+  String(content || '')
+    .trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/```\s*$/i, '')
+    .trim();
+
+const getExtension = (url = '') => {
+  const cleanPath = url.split('?')[0].split('#')[0];
+  const ext = path.extname(cleanPath).toLowerCase();
+  return extensionMimeTypes[ext] ? ext : '.mp4';
+};
+
+const getMimeType = (filePath) => {
+  return extensionMimeTypes[path.extname(filePath).toLowerCase()] || 'video/mp4';
+};
+
+const normalizeSegments = (segments, fallbackText) => {
+  if (!Array.isArray(segments) || !segments.length) {
+    return [{ text: fallbackText, start: 0, end: 60, speaker: 'Speaker 1' }];
+  }
+
+  return segments.map((segment, index) => ({
+    text: String(segment.text || '').trim(),
+    start: Number(segment.start ?? segment.startTime ?? index * 30),
+    end: Number(segment.end ?? segment.endTime ?? (index + 1) * 30),
+    speaker: segment.speaker || `Speaker ${index + 1}`
+  })).filter((segment) => segment.text);
 };
 
 const transcribeAudioFromUrl = async ({ meetingId, audioUrl }) => {
@@ -35,75 +55,53 @@ const transcribeAudioFromUrl = async ({ meetingId, audioUrl }) => {
     const response = await axios.get(audioUrl, { responseType: 'arraybuffer' });
     fs.writeFileSync(tempPath, Buffer.from(response.data));
 
-    const audioData = fs.readFileSync(tempPath);
-    const base64Audio = audioData.toString('base64');
-    const mimeType = getMimeType(tempPath);
-
-    const genAI = getTranscriptionClient();
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const base64Media = fs.readFileSync(tempPath).toString('base64');
+    const model = getTranscriptionClient().getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const result = await model.generateContent([
       {
         inlineData: {
-          mimeType,
-          data: base64Audio
+          mimeType: getMimeType(tempPath),
+          data: base64Media
         }
       },
       {
-        text: `Transcribe this audio/video recording completely and accurately.
-Return ONLY a JSON object with this exact structure, no markdown:
+        text: `Transcribe this meeting recording completely and accurately.
+Return only valid JSON with this shape:
 {
-  "text": "full transcription here",
+  "text": "full transcription",
   "language": "en",
   "segments": [
-    {
-      "text": "segment text",
-      "start": 0.0,
-      "end": 5.0,
-      "speaker": "Speaker 1"
-    }
+    { "text": "segment text", "start": 0, "end": 5, "speaker": "Speaker 1" }
   ]
 }
-
-Rules:
-- Transcribe every word spoken
-- Split into segments of 2-4 sentences each
-- Estimate timestamps based on speech pace (average 150 words/minute)
-- Identify different speakers if possible (Speaker 1, Speaker 2, etc.)
-- Support Hindi, English, and mixed language (Hinglish)
-- Return valid JSON only, absolutely no markdown backticks`
+Estimate timestamps based on speech pace when exact timings are unavailable.
+Support English, Hindi, and mixed Hinglish. Do not include markdown.`
       }
     ]);
 
     const rawText = result.response.text().trim();
-    const cleaned = rawText
-      .replace(/^```json\s*/i, '')
-      .replace(/^```\s*/i, '')
-      .replace(/```\s*$/i, '')
-      .trim();
-
     let parsed;
+
     try {
-      parsed = JSON.parse(cleaned);
-    } catch (e) {
-      parsed = {
-        text: rawText,
-        language: 'en',
-        segments: [{ text: rawText, start: 0, end: 60, speaker: 'Speaker 1' }]
-      };
+      parsed = JSON.parse(stripJsonFence(rawText));
+    } catch {
+      parsed = { text: rawText, language: 'en', segments: [] };
     }
 
+    const text = parsed.text || rawText;
     return {
-      text: parsed.text || rawText,
+      text,
       language: parsed.language || 'en',
-      segments: Array.isArray(parsed.segments) ? parsed.segments : [
-        { text: parsed.text || rawText, start: 0, end: 60, speaker: 'Speaker 1' }
-      ]
+      segments: normalizeSegments(parsed.segments, text)
     };
-
   } finally {
     if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
   }
 };
 
-module.exports = { transcribeAudioFromUrl };
+module.exports = {
+  getExtension,
+  getMimeType,
+  transcribeAudioFromUrl
+};
