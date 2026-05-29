@@ -2,6 +2,7 @@ const sanitizeHtml = require('sanitize-html');
 const { prisma } = require('../config/database');
 const { successResponse, paginatedResponse, errorResponse } = require('../utils/response.utils');
 const { uploadMeetingFile, deleteCloudinaryAsset } = require('../services/cloudinary.service');
+const { deleteMeetingVectors } = require('../services/ai/embedding.service');
 const logger = require('../utils/logger');
 
 const sanitizeText = (value) =>
@@ -235,8 +236,39 @@ const deleteMeeting = async (req, res, next) => {
     }
 
     await deleteCloudinaryAsset(result.meeting.cloudinaryId);
+    await deleteMeetingVectors(result.meeting.id).catch((error) => {
+      logger.warn('Meeting vectors could not be deleted', { meetingId: result.meeting.id, error: error.message });
+    });
     await prisma.meeting.delete({ where: { id: req.params.id } });
     return successResponse(res, null, 'Meeting deleted');
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const processMeeting = async (req, res, next) => {
+  try {
+    const result = await getMeetingForUser(req.params.id, req.userId);
+    if (!result.meeting) {
+      return errorResponse(res, result.status === 403 ? 'Workspace access denied' : 'Meeting not found', result.status);
+    }
+
+    await prisma.transcriptSegment.deleteMany({ where: { transcript: { meetingId: req.params.id } } });
+    await prisma.transcript.deleteMany({ where: { meetingId: req.params.id } });
+    await prisma.actionItem.deleteMany({ where: { meetingId: req.params.id } });
+
+    const meeting = await prisma.meeting.update({
+      where: { id: req.params.id },
+      data: { status: 'PENDING', processingError: null }
+    });
+
+    await enqueueMeetingJob({
+      meetingId: meeting.id,
+      audioUrl: meeting.audioUrl || meeting.videoUrl,
+      workspaceId: meeting.workspaceId
+    });
+
+    return successResponse(res, meeting, 'Meeting processing queued');
   } catch (error) {
     return next(error);
   }
@@ -403,6 +435,7 @@ module.exports = {
   getMeeting,
   updateMeeting,
   deleteMeeting,
+  processMeeting,
   getTranscript,
   getSummary,
   listActionItems,

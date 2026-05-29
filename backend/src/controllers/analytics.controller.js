@@ -41,13 +41,15 @@ const overview = async (req, res, next) => {
       prisma.meeting.findMany({ where: { workspaceId }, select: { duration: true } })
     ]);
 
-    const totalHoursRecorded = meetings.reduce((sum, meeting) => sum + (meeting.duration || 0), 0) / 3600;
+    const totalSeconds = meetings.reduce((sum, meeting) => sum + (meeting.duration || 0), 0);
+    const hoursRecorded = Math.round((totalSeconds / 3600) * 10) / 10;
 
     return successResponse(res, {
       totalMeetings,
       totalTasks,
       totalMembers,
-      totalHoursRecorded
+      hoursRecorded,
+      totalHoursRecorded: hoursRecorded
     }, 'Analytics overview fetched');
   } catch (error) {
     return next(error);

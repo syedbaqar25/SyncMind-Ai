@@ -19,6 +19,14 @@ export const useAuthStore = create(
       setUser: (user) => set({ user }),
       logout: () => set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false }),
     }),
-    { name: 'syncmind-auth' },
+    {
+      name: 'syncmind-auth',
+      partialize: (state) => ({
+        user: state.user,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+        isAuthenticated: state.isAuthenticated,
+      }),
+    },
   ),
 )

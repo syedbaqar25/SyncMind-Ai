@@ -1,42 +1,51 @@
-const { getOpenAIClient } = require('../../config/openai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-const getMessageText = (response) => response.choices?.[0]?.message?.content?.trim() || '';
+// Key 2 — dedicated for all text analysis tasks
+const getAnalysisClient = () => new GoogleGenerativeAI(
+  process.env.GEMINI_API_KEY_2 || process.env.GEMINI_API_KEY
+);
 
-const createChatCompletion = async ({ system, user, max_tokens }) => {
-  const response = await getOpenAIClient().chat.completions.create({
-    model: 'gpt-4o',
-    max_tokens,
-    messages: [
-      { role: 'system', content: system },
-      { role: 'user', content: user }
-    ]
-  });
-
-  return getMessageText(response);
+const getModel = () => {
+  return getAnalysisClient().getGenerativeModel({ model: 'gemini-2.5-flash' });
 };
 
-const summarizeTranscript = (fullText) =>
-  createChatCompletion({
-    max_tokens: 1000,
-    system: 'You are an expert meeting analyst. Write concise, professional summaries.',
-    user:
-      'Write a 3-5 paragraph executive summary of this meeting transcript covering: main topics discussed, key decisions made, important context, and overall outcome.\n\nTRANSCRIPT:\n' +
-      fullText
-  });
+const stripJsonFence = (content) =>
+  String(content || '')
+    .trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/```\s*$/i, '')
+    .trim();
+
+const summarizeTranscript = async (fullText) => {
+  const model = getModel();
+  const result = await model.generateContent(
+    `You are an expert meeting analyst. Write a concise, professional summary.
+
+Write a 3-5 paragraph executive summary of this meeting transcript covering:
+main topics discussed, key decisions made, important context, and overall outcome.
+Be clear and professional.
+
+TRANSCRIPT:
+${fullText}`
+  );
+  return result.response.text().trim();
+};
 
 const extractKeyTopics = async (fullText) => {
-  const content = await createChatCompletion({
-    max_tokens: 200,
-    system: 'You extract key topics from meeting transcripts. Always respond with valid JSON only.',
-    user:
-      'List the 5-8 key topics discussed. Return as a JSON array of short noun phrase strings.\n\nTRANSCRIPT:\n' +
-      fullText
-  });
+  const model = getModel();
+  const result = await model.generateContent(
+    `Extract key topics from this meeting transcript.
+Return ONLY a JSON array of 5-8 short noun phrase strings. No markdown, no explanation.
+Example: ["Budget Planning", "Q3 Goals", "Team Hiring"]
+
+TRANSCRIPT:
+${fullText}`
+  );
 
   try {
-    const parsed = JSON.parse(content);
+    const parsed = JSON.parse(stripJsonFence(result.response.text()));
     return Array.isArray(parsed) ? parsed.map(String).slice(0, 8) : [];
-  } catch (error) {
+  } catch {
     return [];
   }
 };
@@ -47,17 +56,18 @@ const parseSentiment = (content) => {
 };
 
 const analyzeSentiment = async (fullText) => {
-  const content = await createChatCompletion({
-    max_tokens: 10,
-    system: 'You analyze meeting sentiment. Respond with exactly one word.',
-    user: 'What is the overall sentiment of this meeting? Reply with exactly one of: positive, negative, neutral\n\nTRANSCRIPT:\n' + fullText
-  });
+  const model = getModel();
+  const result = await model.generateContent(
+    `Analyze the overall sentiment of this meeting transcript.
+Reply with exactly one word only: positive, negative, or neutral
 
-  return parseSentiment(content);
+TRANSCRIPT:
+${fullText}`
+  );
+  return parseSentiment(result.response.text().trim());
 };
 
 module.exports = {
-  createChatCompletion,
   summarizeTranscript,
   extractKeyTopics,
   analyzeSentiment,

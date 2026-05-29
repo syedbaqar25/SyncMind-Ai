@@ -33,6 +33,7 @@ router.get('/search', validate(searchMeetingSchema), meetingController.searchMee
 router.get('/:id', validate(meetingIdSchema), meetingController.getMeeting);
 router.put('/:id', validate(updateMeetingSchema), meetingController.updateMeeting);
 router.delete('/:id', validate(meetingIdSchema), meetingController.deleteMeeting);
+router.post('/:id/process', validate(meetingIdSchema), meetingController.processMeeting);
 router.get('/:id/transcript', validate(meetingIdSchema), meetingController.getTranscript);
 router.get('/:id/summary', validate(meetingIdSchema), meetingController.getSummary);
 router.get('/:id/action-items', validate(meetingIdSchema), meetingController.listActionItems);

@@ -1,7 +1,12 @@
-import Sidebar from './Sidebar'
-import { useAuthStore } from '../../store/authStore'
+import { useEffect } from 'react'
 import { NavLink } from 'react-router-dom'
 import { BarChart3, CheckSquare, LayoutDashboard, Settings, Video } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import Sidebar from './Sidebar'
+import { useAuthStore } from '../../store/authStore'
+import { useWorkspaceStore } from '../../store/workspaceStore'
+import { workspaceService } from '../../services/workspaceService'
+import toast from 'react-hot-toast'
 
 const mobileLinks = [
   ['/dashboard', LayoutDashboard, 'Home'],
@@ -13,6 +18,44 @@ const mobileLinks = [
 
 export default function DashboardLayout({ title, children }) {
   const user = useAuthStore((state) => state.user)
+  const { activeWorkspaceId, setWorkspaces, setActiveWorkspaceId } = useWorkspaceStore()
+
+  // Fetch all workspaces on every dashboard load
+  const { data } = useQuery({
+    queryKey: ['workspaces'],
+    queryFn: () => workspaceService.list(),
+    staleTime: 30000,
+  })
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        let workspaces = data?.data || []
+
+        // If no workspaces exist → auto-create one
+        if (workspaces.length === 0) {
+          const created = await workspaceService.create({
+            name: `${user?.name?.split(' ')[0] || 'My'}'s Workspace`
+          })
+          workspaces = [created.data]
+        }
+
+        setWorkspaces(workspaces)
+
+        // Set active workspace if not set or invalid
+        const isValid = workspaces.some((w) => w.id === activeWorkspaceId)
+        if (!activeWorkspaceId || !isValid) {
+          setActiveWorkspaceId(workspaces[0].id)
+        }
+      } catch (error) {
+        toast.error(error.response?.data?.message || 'Workspace setup failed')
+      }
+    }
+
+    if (data !== undefined) {
+      init()
+    }
+  }, [data])
 
   return (
     <div className="min-h-screen bg-background text-textPrimary lg:flex">

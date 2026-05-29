@@ -9,6 +9,12 @@ export const useWorkspaceStore = create(
       setWorkspaces: (workspaces) => set({ workspaces }),
       setActiveWorkspaceId: (activeWorkspaceId) => set({ activeWorkspaceId }),
     }),
-    { name: 'syncmind-workspace' },
+    {
+      name: 'syncmind-workspace',
+      partialize: (state) => ({
+        workspaces: state.workspaces,
+        activeWorkspaceId: state.activeWorkspaceId,
+      }),
+    },
   ),
 )

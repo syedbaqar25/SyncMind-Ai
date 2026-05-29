@@ -10,6 +10,7 @@ const RegisterPage = lazy(() => import('./pages/RegisterPage'))
 const EmailVerifyPage = lazy(() => import('./pages/EmailVerifyPage'))
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
+const AuthCallbackPage = lazy(() => import('./pages/AuthCallbackPage'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const MeetingsPage = lazy(() => import('./pages/MeetingsPage'))
 const MeetingDetailPage = lazy(() => import('./pages/MeetingDetailPage'))
@@ -37,20 +38,33 @@ function ProtectedRoute({ children }) {
   return isAuthenticated ? children : <Navigate to="/login" replace />
 }
 
+function PublicOnlyRoute({ children }) {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  return isAuthenticated ? <Navigate to="/dashboard" replace /> : children
+}
+
 function App() {
   const location = useLocation()
 
   return (
     <>
       <AnimatePresence mode="wait">
-        <Suspense fallback={<div className="min-h-screen bg-background p-8 text-textPrimary">Loading...</div>}>
+        <Suspense fallback={
+          <div className="min-h-screen bg-background flex items-center justify-center text-textPrimary">
+            Loading...
+          </div>
+        }>
           <Routes location={location} key={location.pathname}>
+            {/* Public routes */}
             <Route path="/" element={<PageShell><LandingPage /></PageShell>} />
-            <Route path="/login" element={<PageShell><LoginPage /></PageShell>} />
-            <Route path="/register" element={<PageShell><RegisterPage /></PageShell>} />
+            <Route path="/login" element={<PublicOnlyRoute><PageShell><LoginPage /></PageShell></PublicOnlyRoute>} />
+            <Route path="/register" element={<PublicOnlyRoute><PageShell><RegisterPage /></PageShell></PublicOnlyRoute>} />
             <Route path="/verify-email/:token" element={<PageShell><EmailVerifyPage /></PageShell>} />
-            <Route path="/forgot-password" element={<PageShell><ForgotPasswordPage /></PageShell>} />
-            <Route path="/reset-password/:token" element={<PageShell><ResetPasswordPage /></PageShell>} />
+            <Route path="/forgot-password" element={<PublicOnlyRoute><PageShell><ForgotPasswordPage /></PageShell></PublicOnlyRoute>} />
+            <Route path="/reset-password/:token" element={<PublicOnlyRoute><PageShell><ResetPasswordPage /></PageShell></PublicOnlyRoute>} />
+            <Route path="/auth/callback" element={<AuthCallbackPage />} />
+
+            {/* Protected routes */}
             <Route path="/dashboard" element={<ProtectedRoute><PageShell><DashboardPage /></PageShell></ProtectedRoute>} />
             <Route path="/meetings" element={<ProtectedRoute><PageShell><MeetingsPage /></PageShell></ProtectedRoute>} />
             <Route path="/meetings/:id" element={<ProtectedRoute><PageShell><MeetingDetailPage /></PageShell></ProtectedRoute>} />
@@ -58,6 +72,8 @@ function App() {
             <Route path="/analytics" element={<ProtectedRoute><PageShell><AnalyticsPage /></PageShell></ProtectedRoute>} />
             <Route path="/workspace" element={<ProtectedRoute><PageShell><WorkspacePage /></PageShell></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><PageShell><ProfilePage /></PageShell></ProtectedRoute>} />
+
+            {/* 404 */}
             <Route path="*" element={<PageShell><NotFoundPage /></PageShell>} />
           </Routes>
         </Suspense>

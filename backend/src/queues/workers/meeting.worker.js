@@ -44,7 +44,11 @@ const processMeeting = async (job) => {
     const transcription = await transcribeAudioFromUrl({ meetingId, audioUrl });
     const segments = transcription.segments || [];
 
-    const transcript = await prisma.transcript.create({
+    // Delete existing transcript if retry
+await prisma.transcriptSegment.deleteMany({ where: { transcript: { meetingId } } })
+await prisma.transcript.deleteMany({ where: { meetingId } })
+
+const transcript = await prisma.transcript.create({
       data: {
         meetingId,
         fullText: transcription.text,

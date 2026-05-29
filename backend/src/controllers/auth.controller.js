@@ -53,7 +53,8 @@ const register = async (req, res, next) => {
         email,
         name,
         password: await hashPassword(req.body.password),
-        emailVerifyToken
+        emailVerifyToken,
+        isEmailVerified: true  // ← bypass for development
       }
     });
 
@@ -198,7 +199,10 @@ const verifyEmail = async (req, res, next) => {
 const googleCallback = async (req, res, next) => {
   try {
     const tokens = await issueTokens(req.user.id);
-    return successResponse(res, { ...tokens, user: stripUserSecrets(req.user) }, 'Google login successful');
+    const frontendURL = process.env.FRONTEND_URL || 'http://localhost:5173';
+    return res.redirect(
+      `${frontendURL}/auth/callback?token=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`
+    );
   } catch (error) {
     return next(error);
   }

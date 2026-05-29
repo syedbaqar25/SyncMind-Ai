@@ -48,7 +48,7 @@ export default function MeetingsPage() {
         {meetingsQuery.isLoading ? (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{[0, 1, 2, 3].map((item) => <SkeletonCard key={item} />)}</div>
         ) : meetings.length ? (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{meetings.map((meeting) => <MeetingCard meeting={meeting} key={meeting.id} />)}</div>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{meetings.map((meeting) => <MeetingCard meeting={meeting} key={meeting.id} onDeleted={() => meetingsQuery.refetch()} onUpdated={() => meetingsQuery.refetch()} />)}</div>
         ) : (
           <EmptyState title="Upload your first meeting" description="Start with an audio or video file and SyncMind will process the rest." actionLabel="Choose File" />
         )}

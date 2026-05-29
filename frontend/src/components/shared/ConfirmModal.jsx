@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import { Button } from '../ui/Button'
 
-export default function ConfirmModal({ open, title, description, confirmLabel = 'Confirm', onConfirm, onClose }) {
+export default function ConfirmModal({ open, title, description, confirmLabel = 'Confirm', onConfirm, onClose, variant = 'primary' }) {
   return (
     <AnimatePresence>
       {open ? (
@@ -30,7 +30,7 @@ export default function ConfirmModal({ open, title, description, confirmLabel = 
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
-              <Button type="button" onClick={onConfirm}>{confirmLabel}</Button>
+              <Button type="button" className={variant === 'danger' ? 'bg-error hover:bg-error' : ''} onClick={onConfirm}>{confirmLabel}</Button>
             </div>
           </motion.div>
         </motion.div>
