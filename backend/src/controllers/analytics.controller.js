@@ -112,12 +112,16 @@ const topSpeakers = async (req, res, next) => {
 
     const segments = await prisma.transcriptSegment.findMany({
       where: { transcript: { meeting: { workspaceId } } },
-      select: { speaker: true }
+      select: {
+        speaker: true,
+        transcript: { select: { meeting: { select: { uploadedBy: { select: { name: true } } } } } }
+      }
     });
 
     const counts = {};
     segments.forEach((segment) => {
-      const speaker = segment.speaker || 'Unknown';
+      // Use transcript speaker label, or fall back to the uploader's name
+      const speaker = segment.speaker || segment.transcript?.meeting?.uploadedBy?.name || 'Unknown';
       counts[speaker] = (counts[speaker] || 0) + 1;
     });
 
