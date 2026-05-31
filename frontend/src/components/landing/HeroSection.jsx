@@ -144,24 +144,24 @@ export default function HeroSection() {
   const words = ['Stop', 'Taking', 'Notes.', 'Start', 'Understanding', 'Meetings.']
 
   return (
-    <section className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-5 pt-20">
+    <section className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 pt-16 sm:px-5 sm:pt-20">
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.14),transparent_46%)]" />
       <div className="relative z-10 mx-auto max-w-5xl text-center">
-        <h1 ref={headlineRef} className="font-heading text-5xl font-bold leading-[1.02] text-white md:text-7xl">
+        <h1 ref={headlineRef} className="font-heading text-3xl font-bold leading-[1.08] text-white sm:text-5xl md:text-7xl">
           {words.map((word, index) => (
             <span className="mr-3 inline-block" key={word}>{word}{index === 2 ? <br /> : null}</span>
           ))}
         </h1>
-        <p className="mx-auto mt-6 min-h-8 max-w-2xl font-mono text-lg text-textSecondary">
+        <p className="mx-auto mt-4 min-h-7 max-w-2xl font-mono text-sm text-textSecondary sm:mt-6 sm:min-h-8 sm:text-lg">
           {typed}<span className="animate-pulse text-primary">|</span>
         </p>
-        <motion.div className="mt-9 flex flex-col justify-center gap-4 sm:flex-row" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
+        <motion.div className="mt-6 flex flex-col justify-center gap-3 sm:mt-9 sm:flex-row sm:gap-4" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
           <Link to="/register"><Button className="w-full sm:w-auto">Get Started Free</Button></Link>
           <Button variant="ghost" type="button"><Play size={18} /> Watch Demo</Button>
         </motion.div>
       </div>
-      <ArrowDown className="absolute bottom-8 z-10 animate-bounce text-primary" size={28} />
+      <ArrowDown className="absolute bottom-4 z-10 animate-bounce text-primary sm:bottom-8" size={24} />
     </section>
   )
 }

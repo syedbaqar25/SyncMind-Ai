@@ -20,35 +20,47 @@ export default function FeaturesSection() {
   useEffect(() => {
     const ctx = gsap.context(() => {
       gsap.from('.feature-title', {
-        scrollTrigger: { trigger: ref.current, start: 'top 75%' },
+        scrollTrigger: {
+          trigger: '.feature-title',
+          start: 'top 90%',
+          toggleActions: 'play none none none',
+        },
         opacity: 0,
         y: 30,
         duration: 0.7,
       })
-      gsap.from('.feature-card', {
-        scrollTrigger: { trigger: ref.current, start: 'top 65%' },
-        opacity: 0,
-        x: (index) => (index % 2 === 0 ? -40 : 40),
-        stagger: 0.08,
-        duration: 0.65,
+
+      gsap.utils.toArray('.feature-card').forEach((card, index) => {
+        gsap.from(card, {
+          scrollTrigger: {
+            trigger: card,
+            start: 'top 95%',
+            toggleActions: 'play none none none',
+          },
+          opacity: 0,
+          y: 30,
+          x: index % 2 === 0 ? -20 : 20,
+          duration: 0.5,
+          delay: index * 0.06,
+        })
       })
     }, ref)
     return () => ctx.revert()
   }, [])
 
   return (
-    <section id="features" ref={ref} className="bg-background px-5 py-24">
+    <section id="features" ref={ref} className="bg-background px-4 py-10 sm:px-5 sm:py-16 lg:py-20">
       <div className="mx-auto max-w-7xl">
-        <div className="feature-title mx-auto mb-12 max-w-2xl text-center">
-          <h2 className="font-heading text-4xl font-bold text-textPrimary">Everything after the meeting, already done.</h2>
-          <p className="mt-4 text-textSecondary">SyncMind turns recordings into a shared operating layer for decisions and follow-through.</p>
+        <div className="feature-title mx-auto mb-6 max-w-2xl text-center sm:mb-10">
+          <h2 className="font-heading text-2xl font-bold text-textPrimary sm:text-3xl lg:text-4xl">Everything after the meeting, already done.</h2>
+          <p className="mt-3 text-sm text-textSecondary sm:mt-4 sm:text-base">SyncMind turns recordings into a shared operating layer for decisions and follow-through.</p>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
           {features.map(([Icon, title, description]) => (
-            <div className="feature-card rounded-lg border border-border bg-surface p-6 transition hover:-translate-y-1 hover:border-primary/50 hover:shadow-[0_8px_30px_rgba(99,102,241,0.15)]" key={title}>
-              <Icon className="text-primary" size={28} />
-              <h3 className="mt-5 font-heading text-xl font-semibold text-textPrimary">{title}</h3>
-              <p className="mt-3 text-sm leading-6 text-textSecondary">{description}</p>
+            <div className="feature-card rounded-lg border border-border bg-surface p-4 transition hover:-translate-y-1 hover:border-primary/50 hover:shadow-[0_8px_30px_rgba(99,102,241,0.15)] sm:p-5 lg:p-6" key={title}>
+              <Icon className="text-primary" size={24} />
+              <h3 className="mt-3 font-heading text-base font-semibold text-textPrimary sm:mt-4 sm:text-lg lg:text-xl">{title}</h3>
+              <p className="mt-2 text-xs leading-5 text-textSecondary sm:mt-3 sm:text-sm sm:leading-6">{description}</p>
             </div>
           ))}
         </div>

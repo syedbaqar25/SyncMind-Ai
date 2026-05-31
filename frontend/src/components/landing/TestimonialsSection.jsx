@@ -13,13 +13,13 @@ export default function TestimonialsSection() {
   const row = [...testimonials, ...testimonials]
 
   return (
-    <section id="voices" className="overflow-hidden bg-background py-24">
-      <h2 className="px-5 text-center font-heading text-4xl font-bold text-textPrimary">Built for teams that move after meetings.</h2>
-      <div className="mt-12 flex w-max animate-marquee gap-4">
+    <section id="voices" className="overflow-hidden bg-background py-10 sm:py-16 lg:py-20">
+      <h2 className="px-4 text-center font-heading text-2xl font-bold text-textPrimary sm:px-5 sm:text-3xl lg:text-4xl">Built for teams that move after meetings.</h2>
+      <div className="mt-8 flex w-max animate-marquee gap-3 sm:mt-12 sm:gap-4">
         {row.map(([name, role, quote], index) => (
-          <div className="w-80 rounded-lg border border-white/10 bg-white/5 p-5 backdrop-blur" key={`${name}-${index}`}>
-            <p className="text-sm leading-6 text-textPrimary">"{quote}"</p>
-            <div className="mt-5 text-sm text-textSecondary"><span className="text-textPrimary">{name}</span> / {role}</div>
+          <div className="w-64 rounded-lg border border-white/10 bg-white/5 p-4 backdrop-blur sm:w-80 sm:p-5" key={`${name}-${index}`}>
+            <p className="text-xs leading-5 text-textPrimary sm:text-sm sm:leading-6">"{quote}"</p>
+            <div className="mt-3 text-xs text-textSecondary sm:mt-5 sm:text-sm"><span className="text-textPrimary">{name}</span> / {role}</div>
           </div>
         ))}
       </div>
