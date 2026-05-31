@@ -5,6 +5,7 @@ const EMBEDDING_DELAY_MS = Number(process.env.GEMINI_EMBEDDING_DELAY_MS || 15000
 const MAX_EMBEDDING_CHUNKS = Number(process.env.GEMINI_MAX_EMBEDDING_CHUNKS || 4);
 
 let pinecone;
+let cachedModelName = null;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -21,6 +22,9 @@ const getPineconeIndex = () => {
 };
 
 const getEmbeddingModelName = async (apiKey = getEmbeddingApiKey()) => {
+  // Return cached model name if already resolved
+  if (cachedModelName) return cachedModelName;
+
   try {
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`
@@ -31,10 +35,12 @@ const getEmbeddingModelName = async (apiKey = getEmbeddingApiKey()) => {
     ) || [];
     const preferred = embeddingModels.find((model) => model.name.includes('text-embedding-004'));
     const model = preferred || embeddingModels[0];
-    return model ? model.name.replace('models/', '') : 'text-embedding-004';
+    cachedModelName = model ? model.name.replace('models/', '') : 'text-embedding-004';
   } catch {
-    return 'text-embedding-004';
+    cachedModelName = 'text-embedding-004';
   }
+
+  return cachedModelName;
 };
 
 const chunkText = (text, chunkSize = 500, overlap = 50) => {
@@ -93,8 +99,23 @@ const vectorizeTranscript = async ({ meetingId, workspaceId, fullText }) => {
 
 const deleteMeetingVectors = async (meetingId) => {
   const index = getPineconeIndex();
-  if (typeof index.deleteMany === 'function') {
-    await index.deleteMany({ filter: { meetingId } });
+  // Serverless indexes don't support deleteMany with metadata filters.
+  // Delete by known ID pattern instead.
+  const ids = [];
+  for (let i = 0; i < MAX_EMBEDDING_CHUNKS; i += 1) {
+    ids.push(`${meetingId}-chunk-${i}`);
+  }
+  try {
+    await index.deleteMany(ids);
+  } catch {
+    // Fallback: try deleting one by one
+    for (const id of ids) {
+      try {
+        await index.deleteOne(id);
+      } catch {
+        // Vector may not exist — that's fine
+      }
+    }
   }
 };
 

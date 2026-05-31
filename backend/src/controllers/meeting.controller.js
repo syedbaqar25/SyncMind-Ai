@@ -415,14 +415,99 @@ const askMeeting = async (req, res, next) => {
       return errorResponse(res, result.status === 403 ? 'Workspace access denied' : 'Meeting not found', result.status);
     }
 
-    return successResponse(
-      res,
-      {
-        question: sanitizeText(req.body.question),
-        answer: 'Semantic Q&A will be answered by the AI pipeline once embeddings are configured.'
-      },
-      'Question received'
-    );
+    const question = sanitizeText(req.body.question);
+    if (!question) return errorResponse(res, 'Question is required', 400);
+
+    try {
+      const { createEmbedding, getPineconeIndex } = require('../services/ai/embedding.service');
+      const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+      // Step 1: Embed the question
+      const questionEmbedding = await createEmbedding(question);
+
+      // Step 2: Query Pinecone for relevant chunks
+      const index = getPineconeIndex();
+      const queryResult = await index.query({
+        vector: questionEmbedding,
+        topK: 3,
+        includeMetadata: true,
+        filter: { meetingId: req.params.id }
+      });
+
+      const matches = queryResult.matches || [];
+
+      if (!matches.length) {
+        return successResponse(res, {
+          question,
+          answer: 'This meeting has not been indexed for Q&A yet. Please wait for processing to complete or retry the meeting.'
+        }, 'Question received');
+      }
+
+      // Step 3: Build context from matched chunks
+      const context = matches
+        .map((match) => match.metadata?.text || '')
+        .filter(Boolean)
+        .join('\n\n');
+
+      // Step 4: Generate answer using Gemini
+      const genAI = new GoogleGenerativeAI(
+        process.env.GEMINI_API_KEY_2 || process.env.GEMINI_API_KEY
+      );
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+      const prompt = `You are an AI meeting assistant. Answer the user's question based ONLY on the meeting transcript context provided below. If the answer is not in the context, say "I couldn't find that information in this meeting."
+
+MEETING CONTEXT:
+${context}
+
+QUESTION: ${question}
+
+Provide a clear, concise answer:`;
+
+      const genResult = await model.generateContent(prompt);
+      const answer = genResult.response.text().trim();
+
+      return successResponse(res, { question, answer }, 'Question answered');
+    } catch (qaError) {
+      logger.warn('Q&A failed, falling back to transcript-based answer', {
+        meetingId: req.params.id,
+        error: qaError.message
+      });
+
+      // Fallback: if embeddings/Pinecone fail, use the raw transcript with Gemini
+      if (result.meeting.transcript?.fullText) {
+        try {
+          const { GoogleGenerativeAI } = require('@google/generative-ai');
+          const genAI = new GoogleGenerativeAI(
+            process.env.GEMINI_API_KEY_2 || process.env.GEMINI_API_KEY
+          );
+          const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+          const truncatedText = result.meeting.transcript.fullText.slice(0, 8000);
+          const fallbackPrompt = `Answer this question about a meeting based on the transcript below. If the answer is not in the transcript, say so.
+
+TRANSCRIPT:
+${truncatedText}
+
+QUESTION: ${question}
+
+Answer:`;
+
+          const fallbackResult = await model.generateContent(fallbackPrompt);
+          return successResponse(res, {
+            question,
+            answer: fallbackResult.response.text().trim()
+          }, 'Question answered (fallback)');
+        } catch {
+          // If even fallback fails, return a helpful message
+        }
+      }
+
+      return successResponse(res, {
+        question,
+        answer: 'Sorry, I could not process your question right now. Please try again later.'
+      }, 'Question received');
+    }
   } catch (error) {
     return next(error);
   }

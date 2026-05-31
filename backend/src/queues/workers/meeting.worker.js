@@ -45,10 +45,10 @@ const processMeeting = async (job) => {
     const segments = transcription.segments || [];
 
     // Delete existing transcript if retry
-await prisma.transcriptSegment.deleteMany({ where: { transcript: { meetingId } } })
-await prisma.transcript.deleteMany({ where: { meetingId } })
+    await prisma.transcriptSegment.deleteMany({ where: { transcript: { meetingId } } });
+    await prisma.transcript.deleteMany({ where: { meetingId } });
 
-const transcript = await prisma.transcript.create({
+    const transcript = await prisma.transcript.create({
       data: {
         meetingId,
         fullText: transcription.text,
@@ -102,11 +102,19 @@ const transcript = await prisma.transcript.create({
 
     emitWorkspace(workspaceId, 'meeting:transcribed', { meetingId });
 
-    await vectorizeTranscript({
-      meetingId,
-      workspaceId,
-      fullText: transcription.text
-    });
+    // Vectorization wrapped in try/catch — failure does NOT fail the meeting
+    try {
+      await vectorizeTranscript({
+        meetingId,
+        workspaceId,
+        fullText: transcription.text
+      });
+    } catch (vecError) {
+      logger.warn('Vectorization failed — meeting will still complete', {
+        meetingId,
+        error: vecError.message
+      });
+    }
 
     const meeting = await prisma.meeting.update({
       where: { id: meetingId },
