@@ -29,9 +29,13 @@ export default function ProfilePage() {
       <div className="grid gap-5 lg:grid-cols-2">
         <section className="rounded-lg border border-border bg-surface p-5">
           <h2 className="font-heading text-xl font-semibold">Account</h2>
-          <div className="mt-5 flex items-center gap-4">
-            <div className="grid h-20 w-20 place-items-center rounded-full bg-primary/20 text-2xl">{(name || 'U').slice(0, 1)}</div>
-            <input className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-textPrimary" value={avatar} onChange={(event) => setAvatar(event.target.value)} placeholder="Avatar URL" />
+          <div className="mt-5 flex flex-col items-center gap-4 sm:flex-row sm:items-center">
+            {(avatar || user?.avatar) ? (
+              <img src={avatar || user?.avatar} alt={name} className="h-20 w-20 flex-shrink-0 rounded-full object-cover" referrerPolicy="no-referrer" />
+            ) : (
+              <div className="grid h-20 w-20 flex-shrink-0 place-items-center rounded-full bg-primary/20 text-2xl">{(name || 'U').slice(0, 1)}</div>
+            )}
+            <input className="w-full min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-textPrimary" value={avatar} onChange={(event) => setAvatar(event.target.value)} placeholder="Avatar URL" />
           </div>
           <input className="mt-4 w-full rounded-lg border border-border bg-background px-3 py-2 text-textPrimary" value={name} onChange={(event) => setName(event.target.value)} placeholder="Name" />
           <p className="mt-3 text-sm text-textSecondary">{user?.email}</p>
