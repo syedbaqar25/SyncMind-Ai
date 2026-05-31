@@ -35,8 +35,8 @@ export default function MeetingsPage() {
               <button className={`rounded-lg px-3 py-2 text-sm ${tab === item ? 'bg-primary text-white' : 'bg-background text-textSecondary'}`} key={item} onClick={() => setTab(item)} type="button">{item}</button>
             ))}
           </div>
-          <div className="flex gap-2">
-            <input className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-textPrimary outline-none focus:border-primary" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search meetings" />
+          <div className="flex flex-wrap gap-2">
+            <input className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-textPrimary outline-none focus:border-primary" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search meetings" />
             <select className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-textPrimary outline-none" value={sort} onChange={(event) => setSort(event.target.value)}>
               <option value="newest">Newest</option>
               <option value="oldest">Oldest</option>

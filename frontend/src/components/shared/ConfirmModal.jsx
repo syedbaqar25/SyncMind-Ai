@@ -13,7 +13,7 @@ export default function ConfirmModal({ open, title, description, confirmLabel = 
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="w-full max-w-md rounded-lg border border-border bg-surface p-6 shadow-2xl"
+            className="w-full max-w-md rounded-lg border border-border bg-surface p-4 shadow-2xl sm:p-6"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}

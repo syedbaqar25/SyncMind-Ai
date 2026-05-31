@@ -21,8 +21,8 @@ export default function TaskCard({ task, overlay = false, onDelete }) {
       {...attributes}
     >
       <div className="flex items-start justify-between gap-3">
-        <h3 className="font-heading text-sm font-semibold text-textPrimary">{task.title}</h3>
-        <div className="flex items-center gap-2">
+        <h3 className="min-w-0 break-words font-heading text-sm font-semibold text-textPrimary">{task.title}</h3>
+        <div className="flex flex-shrink-0 items-center gap-2">
           <span className={`rounded-full px-2 py-1 text-[11px] ${priorityClasses[task.priority] || priorityClasses.MEDIUM}`}>{task.priority}</span>
           {!overlay ? (
             <button className="grid h-8 w-8 place-items-center rounded-md text-textSecondary hover:bg-error/10 hover:text-error" onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { event.stopPropagation(); onDelete?.(task) }} type="button">

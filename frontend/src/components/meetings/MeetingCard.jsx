@@ -42,8 +42,8 @@ export default function MeetingCard({ meeting, onDeleted, onUpdated }) {
     >
       <div className="mb-4 h-20 rounded-lg border border-border bg-[linear-gradient(135deg,rgba(99,102,241,0.22),rgba(168,85,247,0.12))]" />
       <div className="flex items-start justify-between gap-3">
-        <Link className="font-heading text-lg font-semibold text-textPrimary hover:text-primary" to={`/meetings/${meeting.id}`}>{meeting.title}</Link>
-        <div className="relative flex items-center gap-2">
+        <Link className="min-w-0 break-words font-heading text-lg font-semibold text-textPrimary hover:text-primary" to={`/meetings/${meeting.id}`}>{meeting.title}</Link>
+        <div className="relative flex flex-shrink-0 items-center gap-2">
           <span title={meeting.processingError || meeting.status} className={`rounded-full px-2 py-1 text-xs ${statusClasses[meeting.status] || statusClasses.PENDING}`}>{meeting.status}</span>
           <button className="grid h-9 w-9 place-items-center rounded-lg text-textSecondary hover:bg-background hover:text-textPrimary" onClick={() => setMenuOpen((value) => !value)} type="button">
             <MoreHorizontal size={18} />

@@ -12,7 +12,7 @@ const columns = [
 function Column({ id, title, tasks, onDelete, onClearCompleted }) {
   const { setNodeRef, isOver } = useDroppable({ id })
   return (
-    <section ref={setNodeRef} className={`min-h-96 rounded-lg border border-border bg-surface p-3 transition ${isOver ? 'border-primary' : ''}`}>
+    <section ref={setNodeRef} className={`min-h-48 rounded-lg border border-border bg-surface p-3 transition sm:min-h-96 ${isOver ? 'border-primary' : ''}`}>
       <div className="mb-3 flex items-center justify-between">
         <h2 className="font-heading text-sm font-semibold text-textPrimary">{title}</h2>
         <div className="flex items-center gap-2">
@@ -41,7 +41,7 @@ export default function TaskBoard({ tasks = [], onMove, onDelete, onClearComplet
       }}
       onDragCancel={() => setActiveTask(null)}
     >
-      <div className="grid gap-4 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {columns.map(([id, title]) => <Column id={id} title={title} tasks={tasks.filter((task) => task.status === id)} key={id} onDelete={onDelete} onClearCompleted={onClearCompleted} />)}
       </div>
       <DragOverlay>{activeTask ? <TaskCard task={activeTask} overlay /> : null}</DragOverlay>

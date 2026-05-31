@@ -68,8 +68,8 @@ export default function MeetingUpload({ workspaceId, onUploaded }) {
       </div>
       {file ? (
         <div className="mt-5 space-y-4">
-          <div className="rounded-lg border border-border bg-background p-4 text-sm text-textSecondary">
-            <span className="text-textPrimary">{file.name}</span> / {formatFileSize(file.size)}
+          <div className="overflow-hidden rounded-lg border border-border bg-background p-4 text-sm text-textSecondary">
+            <span className="break-all text-textPrimary">{file.name}</span> / {formatFileSize(file.size)}
           </div>
           <input className="w-full rounded-lg border border-border bg-background px-4 py-3 text-textPrimary outline-none focus:border-primary" value={title} onChange={(e) => setTitle(e.target.value)} />
           {loading ? <div className="h-2 overflow-hidden rounded-full bg-surface2"><div className="h-full bg-gradient-to-r from-primary to-accent" style={{ width: `${progress}%` }} /></div> : null}

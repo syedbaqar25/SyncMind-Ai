@@ -55,7 +55,7 @@ export default function WorkspacePage() {
           {workspaceQuery.isLoading ? (
             <div className="h-10 w-full animate-pulse rounded-lg bg-surface2" />
           ) : (
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <input
                 className="flex-1 rounded-lg border border-border bg-background px-4 py-3 text-textPrimary outline-none transition focus:border-primary"
                 placeholder="Workspace name"

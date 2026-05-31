@@ -38,7 +38,7 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="hidden min-h-screen w-64 flex-col border-r border-border bg-surface px-4 py-5 lg:flex">
+    <aside className="hidden min-h-screen w-64 flex-col overflow-hidden border-r border-border bg-surface px-4 py-5 lg:flex">
       <div className="px-3 font-heading text-xl font-bold text-textPrimary">SyncMind AI</div>
       <div className="mt-6 rounded-lg border border-border bg-background p-3">
         <p className="text-xs uppercase tracking-widest text-textSecondary">Workspace</p>

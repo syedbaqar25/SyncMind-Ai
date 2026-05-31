@@ -76,7 +76,7 @@ export default function MeetingDetailPage() {
         <div className="flex-1 space-y-3">
           {messages.map((message, index) => <div className={`rounded-lg p-3 text-sm ${message.role === 'user' ? 'ml-auto bg-primary text-white' : 'bg-background text-textSecondary'}`} key={index}>{message.text}</div>)}
         </div>
-        <form className="mt-4 flex gap-2" onSubmit={(event) => { event.preventDefault(); if (question.trim()) askMutation.mutate(question) }}>
+        <form className="mt-4 flex flex-col gap-2 sm:flex-row" onSubmit={(event) => { event.preventDefault(); if (question.trim()) askMutation.mutate(question) }}>
           <input className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-textPrimary outline-none focus:border-primary" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Ask about this meeting" />
           <button className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white" type="submit">Ask</button>
         </form>
@@ -130,13 +130,13 @@ export default function MeetingDetailPage() {
         <Button type="button" className="bg-error hover:bg-error" onClick={() => setDeleteOpen(true)}>Delete</Button>
       </div>
       <div className="grid gap-5 lg:grid-cols-[0.55fr_0.45fr]">
-        <section>
+        <section className="min-w-0">
           <h2 className="mb-4 font-heading text-xl font-semibold">Transcript</h2>
           <TranscriptViewer segments={transcript?.segments || []} currentTime={currentTime} onSeek={(time) => wave?.setTime(time)} />
         </section>
         <section>
-          <div className="mb-4 flex gap-2 overflow-x-auto">
-            {tabs.map((item) => <button className={`rounded-lg px-3 py-2 text-sm ${tab === item ? 'bg-primary text-white' : 'bg-surface text-textSecondary'}`} key={item} onClick={() => setTab(item)} type="button">{item}</button>)}
+          <div className="mb-4 flex gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            {tabs.map((item) => <button className={`whitespace-nowrap rounded-lg px-3 py-2 text-sm ${tab === item ? 'bg-primary text-white' : 'bg-surface text-textSecondary'}`} key={item} onClick={() => setTab(item)} type="button">{item}</button>)}
           </div>
           <AnimatePresence mode="wait">
             <motion.div key={tab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
