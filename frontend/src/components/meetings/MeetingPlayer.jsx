@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Pause, Play } from 'lucide-react'
 import AudioWaveform from '../shared/AudioWaveform'
 import { formatDuration } from '../../utils/formatters'
@@ -9,6 +9,17 @@ export default function MeetingPlayer({ url, onTime, onWaveReady }) {
   const [volume, setVolume] = useState(1)
   const [duration, setDuration] = useState(0)
   const [current, setCurrent] = useState(0)
+
+  // Memoize callbacks so they don't change on every render
+  const handleReady = useCallback((wave) => {
+    setDuration(wave.getDuration())
+    onWaveReady?.(wave)
+  }, [onWaveReady])
+
+  const handleTime = useCallback((time) => {
+    setCurrent(time)
+    onTime?.(time)
+  }, [onTime])
 
   return (
     <div className="sticky bottom-0 z-30 border-t border-border bg-background/95 p-4 backdrop-blur">
@@ -22,14 +33,8 @@ export default function MeetingPlayer({ url, onTime, onWaveReady }) {
             playing={playing}
             speed={speed}
             volume={volume}
-            onReady={(wave) => {
-              setDuration(wave.getDuration())
-              onWaveReady?.(wave)
-            }}
-            onTime={(time) => {
-              setCurrent(time)
-              onTime?.(time)
-            }}
+            onReady={handleReady}
+            onTime={handleTime}
           />
           <div className="mt-1 flex justify-between font-mono text-xs text-textSecondary">
             <span>{formatDuration(current)}</span>
