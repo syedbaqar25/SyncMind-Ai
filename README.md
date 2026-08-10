@@ -98,7 +98,7 @@ Current suite: 46 passing tests with focused coverage above the configured 70% t
 ## Deployment
 
 - Frontend: Cloudflare Pages via `.github/workflows/frontend-deploy.yml`
-- Backend: Railway with PostgreSQL and Redis
+- Backend: Render with PostgreSQL and Redis
 - CI: `.github/workflows/backend-test.yml`
 
 Required deployment secrets are documented in `backend/.env.example` and `frontend/.env.example`.

@@ -23,6 +23,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
 app.use(generalLimiter);
 
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
 app.use('/api', routes);
 
 app.use(notFound);
