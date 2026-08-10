@@ -2,10 +2,15 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const { prisma } = require('./database');
 
+const logger = require('../utils/logger');
+
 const configurePassport = () => {
   if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    logger.warn('Google OAuth disabled: GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET missing');
     return passport;
   }
+
+  logger.info('Initializing Google OAuth strategy');
 
   passport.use(
     new GoogleStrategy(
